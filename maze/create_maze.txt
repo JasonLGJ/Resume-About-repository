@@ -1,0 +1,144 @@
+#include<stdio.h>
+#include<stdlib.h>
+#include <stdio.h>
+#include <conio.h>
+#include <windows.h>
+#include <time.h>
+#include <iostream>
+#include <stack>
+using namespace std;
+
+#define Status int
+#define Wall 1
+#define Road 0
+#define Start 0
+#define End 0
+#define Esc 5
+#define Up 1
+#define Down 2
+#define Left 3
+#define Right 4
+#define ERROR 0
+#define OVERFLOW -2
+#define TRUE 1
+#define FALSE 0
+#define OUT 8
+#define STEPPED 2
+#define MAX 1000000
+
+struct Point
+{
+	int row;
+	int col;
+
+	Point(int x, int y) {
+		this->row = x;
+		this->col = y;
+	}
+
+	bool operator!=(const Point& rhs) {							//不等号操作符重载
+		if (this->row != rhs.row || this->col != rhs.col)       //判断出入口是否符合迷宫大小  
+			return true;
+		return false;
+	}
+};
+//      定义当前点和起点的结构体
+typedef struct
+{
+	int x, y;
+	int parent_x, parent_y;
+}QNode, *QueuePtr;
+typedef QNode ElemType;//单一元素点
+typedef struct SqQueue
+{
+	ElemType * base;
+	int front;
+	int rear;
+}SqQueue;//元素点队列结构体
+typedef struct
+{
+	int top, base, count;
+	ElemType container[19000];
+}SqStack;//元素点栈，container数组
+Status InitStack(SqStack *s);
+Status StackEmpty(SqStack s);
+Status InitQueue(SqQueue *Q);//初始化队列          
+Status QueueEmpty(SqQueue Q);//判断队列是否为空    
+Status GetHead(SqQueue Q, ElemType *e);//取队列头元素  
+Status EnQueue(SqQueue *Q, ElemType e);//入队       
+Status DeQueue(SqQueue *Q, ElemType *e);//出队     
+Status Push(SqStack *s, ElemType e);//入栈       
+Status Pop(SqStack *s, ElemType *e);//出栈       
+void game2(int **Map, int Height, int Width);//广度优先搜索走迷宫过的操作   
+void gotoxy(int x, int y);												//移动光标的函数  
+void paint(int **Map, int x, int y);									//打印迷宫墙和路的函数  
+void paint2(int **Map, int x, int y);									//打印迷宫路径的函数  
+int ** createMap(int Width, int Height);								//创建二维数组 用于储存迷宫 
+void create1(int ** MAP, int x, int y, int Height, int Width, int speed);//随机生成迷宫函数 
+void create2(int ** MAP, int x, int y, int Height, int Width);			//随机生成迷宫函数 
+int get_key();															//接受方向键的函数 
+void game(int **Map, int Height, int Width);							//游戏操作函数     
+void hidden();															//隐藏光标的函数   
+void print(int x, int y);												//打印路径函数     
+void printM();															//打印菜单函数     
+Point getAdjacentNotVisitedNode(bool** mark, Point point, int m, int n);//获取相邻未被访问的节点的函数   
+void mazePath(void* maze, int m, int n, const Point& startP, Point endP, stack<Point>& pointStack);//给定二维迷宫，求可行路径的函数（DFS） 
+
+int main()
+{
+	int choose = 0;
+	srand((unsigned)time(NULL));
+	while (1)
+	{
+		system("CLS");
+		printM();
+		scanf("%d", &choose);//此处还可以设置防止输入不在1-4之间或输入其它错误输入的措施。
+		if (choose == 1)
+		{
+			hidden();
+			system("CLS");
+			int i = 0, j = 0;
+			//输入行和列
+			int Height = 0, Width = 0, speed = 0;
+			printf("请输入行数列数以及打通相邻点的时间差（单位ms）（以空格隔开后敲击回车，行列仅可以输入奇数）\n");
+			scanf("%d %d %d", &Height, &Width, &speed);
+			system("CLS");
+			//生成储存迷宫的数组
+			int ** Map = createMap(Width, Height);
+			//初始化迷宫
+			for (i = 0; i <= Height + 1; ++i)
+				for (j = 0; j <= Width + 1; ++j)
+					if (i == 0 || i == Height + 1 || j == 0 || j == Width + 1)
+						Map[i][j] = Road;
+					else Map[i][j] = Wall;
+					//创建迷宫
+					for (i = 1; i <= Height; i++)
+						for (j = 1; j <= Width; j++) //画出迷宫
+							paint(Map, i, j);
+					create1(Map, 2 * (rand() % (Height / 2) + 1), 2 * (rand() % (Width / 2) + 1), Height, Width, speed);
+					//边界处理
+					for (i = 0; i <= Height + 1; ++i)
+					{
+						Map[i][0] = Wall;
+						Map[i][Width + 1] = Wall;
+					}
+					//边界处理
+					for (j = 0; j <= Width + 1; ++j)
+					{
+						Map[0][j] = Wall;
+						Map[Height + 1][j] = Wall;
+					}
+					//迷宫出入口设置
+					Map[2][1] = Start;
+					Map[Height - 1][Width] = End;
+					for (i = 1; i <= Height; i++)
+						for (j = 1; j <= Width; j++) //画出迷宫
+							paint(Map, i, j);
+					gotoxy(0, 1);
+					printf("入");
+					gotoxy(Width * 2 - 2, Height - 2);
+					printf("出");
+					printf("\n\n按任意键回到菜单");
+					getch();
+
+		}
